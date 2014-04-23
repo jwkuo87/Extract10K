@@ -1,0 +1,198 @@
+#!/usr/bin/perl -w
+use strict;
+use Time::Progress;
+use HTML::Entities;
+use threads;
+
+### TODO:
+### ADD CODE TO CONTINUE PROCESS
+### IMPROVE MULTITHREADING
+### IMPROVE REGEX FOR ITEMS
+### REMOVE DUPLICATE SPACES AND BREAKS
+### FIX WIDE CHARACTERS IN PRINT
+
+
+#All variables
+my $num_of_threads = 1;         #Number of threads
+my $os="WIN";                   #Declare operating system for correct directory handling: WIN for Windows and OSX for Macintosh
+my $source;                     #Source of text files
+my $target_10k;                 #Destination for output (10K)
+my $target_mda;                 #Destination for output (MD&A)
+my $slash;                      #Declare slash (dependent on operating system)
+my @allfiles;                   #All files in source directory, put into an array
+my $p;                          #Variable for progress-bar
+my $c;                          #Variable for progress-bar
+my $file;                       #Name of source file
+my $data;                       #Contents from source file
+my $text;                       #Results of the search query (10K)
+my $mda;                        #Results of the search query (MD&A)
+my $output_10k;                 #Output file for full 10K
+my $output_mda;                 #Output file for MD&A
+my @threads;                    #All threads in array
+
+#Searchstrings in regular expressions
+#my $startstring='item(\s|(&.{2,4};))*1[^0-9a-z\"]*business(\s|.){1,500}^(item(\s|(&.{2,4};))*2)';
+my $startstring='item(\s|(&.{2,4};))*1[^0-9a-z\"]*business';
+my $endstring='ENDOF10K';
+my $item7start='item(\s|(&.{2,4};))*7[^0-9a-z\"]*management(?:[^0-9a-z]{0,3}s)?\s+discussions?\s+and\s+analysis\s+of\s+(?:financial\s+conditions?\s+|results\s+of\s+operations?)(?:\s+and\s+results\s+of\s+operations?|\s+and\s+financial\s+conditions?)';        
+my $item7end='ENDOFITEM7';
+my $item8start='item(\s|(&.{2,4};))*8[^0-9a-z\"]*financial(\s|(&.{2,4};))*statements(\s|(&.{2,4};))*and(\s|(&.{2,4};))*supplementary(\s|(&.{2,4};))*data';      
+my $item9start='item(\s|(&.{2,4};))*9[^0-9a-z\"]*(changes(\s|(&.{2,4};))*in(\s|(&.{2,4};))*and(\s|(&.{2,4};))*disagreements(\s|(&.{2,4};))*with(\s|(&.{2,4};))*(accountants|independent(\s|(&.{2,4};))*auditors)*(\s|(&.{2,4};))*on(\s|(&.{2,4};))*accounting(\s|(&.{2,4};))*and(\s|(&.{2,4};))*financial(\s|(&.{2,4};))*disclosure';     
+my $item10start='item(\s|(&.{2,4};))*10[^0-9a-z\"]*';
+
+if($os ne "WIN" && $os ne "OSX")
+{
+print "Declare valid operating system!\n";
+exit; 
+}
+
+elsif($os eq "WIN")
+{
+#Set folders for Windows
+$source="C:\\EDGAR\\10K";
+$target_10k="C:\\EDGAR\\10K_Full";
+$target_mda="C:\\EDGAR\\10K_MDA";
+$slash="\\";
+}
+
+elsif($os eq "OSX")
+{
+#Set folders for Macintosh
+$source="/Volumes/Data/Documents/10K";
+$target_10k="/Volumes/Data/Documents/10K_Full";
+$target_mda="/Volumes/Data/Documents/10K_MDA";
+$slash="/";
+}
+
+{
+#Creates destination folder
+mkdir $target_10k;
+mkdir $target_mda;
+
+#Open source folder and read all files
+opendir(DIR,"$source") or die $!;
+@allfiles=grep ! /^\./, readdir DIR;
+
+#Keep track of progress
+$|=1;
+$p=new Time::Progress;
+$p->attr(min => 0, max => scalar @allfiles);
+$c=0;
+
+#Create an array of threads
+@threads = job();
+
+#Loop through the array until every thread is finished
+foreach(@threads)
+    {
+    $_ = threads->create(\&extract);
+    }
+
+foreach(@threads)
+    {
+    $_->join();
+    }
+}
+
+
+
+#Subroutines
+sub job
+{
+my @initThreads;
+for(my $t = 1;$t<=$num_of_threads;$t++)
+    {
+    push(@initThreads,$t);
+    }
+return @initThreads;
+}
+
+sub extract
+{
+my $f=0;
+while ($f < scalar @allfiles)
+    {
+    print $p->report("Working on $allfiles[$f]. Progress: %p\r\n", $c);
+    #print $p->report("%45b currently working on $allfiles[$f-1]%p\r", $c);
+        {
+            {
+            local $/;
+            open (SLURP, "$source$slash$allfiles[$f]") or die $!;
+            $f++;
+            $data = <SLURP>;
+            }
+        close SLURP or die $!;
+
+        #Steps to extract text
+            {
+            #Replacements in regular expressions (Cleanup)
+            $data=~ s/&nbsp;/ /ig;                              #Replace &nbsp; with space (decode_entities works too, but results in invalid characters)
+            $data=decode_entities($data);                       #Remove HTML entities
+            $data=~ s/<\/SEC-DOCUMENT>/ENDOF10K/is;             #Mark end of document
+            $data=~ s/\sM+.{29,}//g;                            #Remove irrelevant code
+            $data=~ s/<\/p>/\./igs;                             #End of sentence
+            $data=~ s/<\/div>/\./igs;                           #End of sentence
+            $data=~ s/<br.{0,2}>/\./igs;                        #End of sentence
+            $data=~ s/<\/table>/\n/igs;                         #Break line
+            $data=~ s/<\/tr>/\n/igs;                            #Break line
+            $data=~ s/<\/td>/\n/igs;                            #Break line
+            $data=~ s/<.+?>/ /igs;                              #Remove html tags (starts with "<", ends with ">", with 1-200 characters)
+            $data=~ s/&.{2,4};/ /igs;                           #Replace any leftover HTML entities with spaces
+            $data=~ s/('s|-)//g;                                #Remove symbols from words (e.g. "'s"/"-")
+            $data=~ s/\S{30,}/ /g;                              #Remove long strings (+30 characters)
+                                                                #Remove all remaining strings that do not consist of letters (e.g. numbers)
+            $data=~ s/\n{3,}/\n\n/g;                            #Remove double breaks
+            $data=~ s/ {2,}/ /g;                                #Remove double spaces
+                                                                
+            if($data=~m/($startstring.*?$endstring)/ismo)
+                {
+                $text=$1;
+                }
+            else
+                {
+                $text="not found";
+                }
+            
+            if ($text=~m/$item8start/ismo)    
+                {
+                $text=~s/($item8start)/ENDOFITEM7/gis;
+                }
+            elsif ($text=~m/$item9start/ismo)    
+                {
+                $text=~s/($item9start)/ENDOFITEM7/gis;
+                }
+            elsif ($text=~m/$item10start/ismo)    
+                {
+                $text=~s/($item10start)/ENDOFITEM7/gis;
+                }
+            
+            if($data=~m/($item7start.*?$item7end)/ismo)
+                {
+                $mda=$1;
+                }
+            else
+                {
+                $mda="not found";
+                }
+            }
+    
+        #Save output to file in destination folder (use the same filename as source file)
+        open $output_10k, ">", "$target_10k$slash$allfiles[$f-1]" or die $!;
+        print $output_10k $text;
+        close $output_10k;
+        
+        open $output_mda, ">", "$target_mda$slash$allfiles[$f-1]" or die $!;
+        print $output_mda $mda;
+        close $output_mda;
+        }
+    
+    #Update progress
+    $c++;
+    #print $p->report("%45b currently working on $allfiles[$f-1]%p\r", $c);
+    }
+    
+#Print job duration
+print $p->report("$f files processed: %L (%l sec) \n", $c);
+exit;
+}
+
