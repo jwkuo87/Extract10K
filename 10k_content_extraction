@@ -4,12 +4,6 @@ use Time::Progress;
 use HTML::Entities;
 use threads;
 
-### TRY MULTITHREADING
-### xxx INCLUDE REGEX FOR ITEMS
-### REMOVE DUPLICATE SPACES AND BREAKS
-### FIX WIDE CHARACTERS IN PRINT
-
-
 #All variables
 my $num_of_threads = 1;         #Number of threads
 my $os="WIN";                   #Declare operating system for correct directory handling: WIN for Windows and OSX for Macintosh
