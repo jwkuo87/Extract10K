@@ -1,4 +1,4 @@
-10k_content_extraction
+10K Content Analysis
 ======================
 
 Extracting text from the raw 10-K filings on SEC's EDGAR database. Output is two-fold: One for the entire 10-K and one for Item 7(A), both in txt files. 
