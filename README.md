@@ -17,3 +17,10 @@ The basic info from the 10K filing can be obtained with the 10k_info_extraction.
 - Standard Industrial Classification
 
 The output for all files in the source directory will be written to a text file (semicolon separated values)
+
+On the todo list:
+- Improve multithreading so files are processed correctly (instead of 4 threads doing the exact same thing)
+- Improve regular expressions for item extraction (MD&A)
+- Remove duplicate spaces and breaks in output file (10K)
+- Fix wide characters in print
+- Add continue function (read outputfile to see what the last file was and continue with that file)
