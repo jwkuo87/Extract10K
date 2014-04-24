@@ -4,10 +4,8 @@ use Time::Progress;
 use HTML::Entities;
 use threads;
 
-### TODO:
-### ADD CODE TO CONTINUE PROCESS
-### IMPROVE MULTITHREADING
-### IMPROVE REGEX FOR ITEMS
+### TRY MULTITHREADING
+### xxx INCLUDE REGEX FOR ITEMS
 ### REMOVE DUPLICATE SPACES AND BREAKS
 ### FIX WIDE CHARACTERS IN PRINT
 
@@ -65,13 +63,13 @@ $slash="/";
 }
 
 {
-#Creates destination folder
-mkdir $target_10k;
-mkdir $target_mda;
-
 #Open source folder and read all files
 opendir(DIR,"$source") or die $!;
 @allfiles=grep ! /^\./, readdir DIR;
+
+#Creates destination folder
+mkdir $target_10k;
+mkdir $target_mda;
 
 #Keep track of progress
 $|=1;
@@ -112,8 +110,7 @@ sub extract
 my $f=0;
 while ($f < scalar @allfiles)
     {
-    print $p->report("Working on $allfiles[$f]. Progress: %p\r\n", $c);
-    #print $p->report("%45b currently working on $allfiles[$f-1]%p\r", $c);
+    print $p->report("%45b %p\r", $c);
         {
             {
             local $/;
@@ -188,11 +185,10 @@ while ($f < scalar @allfiles)
     
     #Update progress
     $c++;
-    #print $p->report("%45b currently working on $allfiles[$f-1]%p\r", $c);
+    print $p->report("%45b %p\r", $c);
     }
     
 #Print job duration
 print $p->report("$f files processed: %L (%l sec) \n", $c);
-exit;
 }
 
