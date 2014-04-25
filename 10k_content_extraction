@@ -73,6 +73,7 @@ $slash="/";
 #Open source folder and read all files
 opendir(DIR,"$source") or die $!;
 @allfiles=grep ! /(^\.|^(log\.txt))/, readdir DIR;
+chomp(@allfiles);
 
 #Creates destination folder
 mkdir $target_10k;
@@ -114,18 +115,19 @@ return @initThreads;
 
 sub extract
 {
-my $f=0;
 if (-e "$source$slash"."log.txt")
 {
 open (FH, "<", "$source$slash"."log.txt") or die $!;
 @filesinlog = <FH>;
+chomp(@filesinlog);
 close FH or die $!;
 }
  
+my $f=0;
 while ($f < scalar @allfiles)
     {
     print $p->report("%45b %p\r", $c);
-    if (grep $allfiles[$f] = $_, @filesinlog)
+    if (grep $allfiles[$f] eq $_, @filesinlog)
         {
         $f++;
         }
@@ -220,5 +222,6 @@ while ($f < scalar @allfiles)
     
 #Print job duration
 print $p->report("$f files processed: %L (%l sec) \n", $c);
+
 }
 
