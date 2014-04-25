@@ -23,4 +23,3 @@ On the todo list:
 - Improve regular expressions for item extraction (MD&A)
 - Remove duplicate spaces and breaks in output file (10K)
 - Fix wide characters in print
-- Add continue function (read outputfile to see what the last file was and continue with that file)
