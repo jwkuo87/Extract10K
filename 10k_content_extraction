@@ -3,12 +3,7 @@ use strict;
 use Time::Progress;
 use HTML::Entities;
 use threads;
-
-### TRY MULTITHREADING
-### xxx INCLUDE REGEX FOR ITEMS
-### REMOVE DUPLICATE SPACES AND BREAKS
-### FIX WIDE CHARACTERS IN PRINT
-
+#use Diagnostics;
 
 #All variables
 my $num_of_threads = 1;         #Number of threads
@@ -21,7 +16,6 @@ my $slash;                      #Declare slash (dependent on operating system)
 my @allfiles;                   #All files in source directory, put into an array
 my $p;                          #Variable for progress-bar
 my $c;                          #Variable for progress-bar
-my $file;                       #Name of source file
 my $data;                       #Contents from source file
 my $text;                       #Results of the search query (10K)
 my $mda;                        #Results of the search query (MD&A)
@@ -30,20 +24,17 @@ my $output_mda;                 #Output file for MD&A
 my $log;                        #Log file (also used to determine point to continue progress)
 my @filesinlog;                 #Files that have been processed according to log file
 my @threads;                    #All threads in array
+my $replace_old;                #Partial text to be replaced
+my $replace_new;                #Partial text with the new replacement
 
 #Searchstrings in regular expressions
-#my $startstring='item\s*1.{0,50}business(\s|.){1,500}^(item\s*2)';
-my $startstring='item.{0,10}1.{0,50}business';
-my $endstring='ENDOF10K';
-#my $item7start='item\s*7.{0,50}management\s+discussions\s+and\s+analysis\s+of\s+(?:financial\s+conditions?\s+|results\s+of\s+operations?)(?:\s+and\s+results\s+of\s+operations?|\s+and\s+financial\s+conditions?)';        
-my $item7start='item\s*7';
-my $item7end='ENDOFITEM7';
-#my $item8start='item\s*8.{0,50}financial\s*statements\s*and\s*supplementary\s*data'; 
-my $item8start='item\s*8';     
-#my $item9start='item\s*9.{0,50}changes\s*in\s*and\s*disagreements\s*with\s*(accountants|independent\s*auditors)*\s*on\s*accounting\s*and\s*financial\s*disclosure';     
-my $item9start='item\s*9';
-#my $item10start='item\s*10';
-my $item10start='item\s*10';
+my $startstring='[^!]item\s*1\D';
+my $endstring='ENDOFTENK';
+my $item7start='[^!]item\s*7[^a]';
+my $item7end='ENDOFMDA';
+my $item8start='[^!]item\s*8';     
+my $item9start='[^!]item\s*9';
+my $item10start='[^!]item\s*10';
 
 if($os ne "WIN" && $os ne "OSX")
 {
@@ -145,33 +136,53 @@ while ($f < scalar @allfiles)
             {
             #Replacements in regular expressions (Cleanup)
             
-            $data=~ s/&nbsp;/ /ig;                           #Replace &nbsp; with space (decode_entities works too, but results in invalid characters)
-            $data=~ s/&#160;/ /ig;                           #Replace &nbsp; with space (decode_entities works too, but results in invalid characters)
+            $data=~ s/&nbsp;/ /ig;                              #Replace &nbsp; with space (decode_entities works too, but results in invalid characters)
+            $data=~ s/&#160;/ /ig;                              #Replace &nbsp; with space (decode_entities works too, but results in invalid characters)
             $data=decode_entities($data);                       #Remove HTML entities
-            $data=~ s/<\/SEC-DOCUMENT>/ENDOF10K/is;             #Mark end of document
-                $data=~ s/<\/p>/\./igs;                             #End of sentence
-                $data=~ s/<\/div>/\./igs;                           #End of sentence
-                $data=~ s/<br.{0,2}>/\./igs;                        #End of sentence
-                if ($keeptables==1)
-                    {
-                    $data=~ s/<\/tr>/\.\n/igs;                        #Break line
-                    }
-                else
-                    {
-                    $data=~ s/<table.*\/table>/ /igs;           #Remove tables
-                    }
-                $data=~ s/<.{1,200}>/ /igs;                          #Remove html tags (starts with "<", ends with ">", with 1-200 characters)
-                $data=~ s/&.{2,4};/ /igs;                           #Replace any leftover HTML entities with spaces
-                #$data=~ s/('s|-)//g;                                #Remove symbols from words (e.g. "'s"/"-")
-                #$data=~ s/\S{30,}/ /g;                              #Remove long strings (+30 characters)
-                                                                    #Remove all remaining strings that do not consist of letters (e.g. numbers)
-                #$data=~ s/\n{3,}/\n\n/g;                            #Remove double breaks
-                #$data=~ s/ {2,}/ /g;                                #Remove double spaces
-                #$data=~ s/\. +\./\./g;                              #Remove double end of sentences                                                        
+            $data=~ s/<\/SEC-DOCUMENT>/ENDOFTENK/is;            #Mark end of document
+            $data=~ s/<\/p>/\./igs;                             #End of sentence
+            $data=~ s/<\/div>/\./igs;                           #End of sentence
+            $data=~ s/<br.{0,2}>/\./igs;                        #End of sentence
+            
+            if ($keeptables==1)
+                {
+                $data=~ s/<\/tr>/\.\n/igs;                      #Break line
+                }
+            else
+                {
+                $data=~ s/<table.*\/table>/ /igs;               #Remove tables
+                }
+            $data=~ s/<[^\>]*>/ /igs;                           #Remove html tags (starts with "<", ends with ">", with 1-200 characters)
+            $data=~ s/&.{2,4};/ /igs;                           #Replace any leftover HTML entities with spaces
+            $data=~ s/-/ /g;                                    #Replace symbols with space (e.g. "-")
+            $data=~ s/'s//g;                                    #Remove symbols from words (e.g. "'s")
+            $data=~ s/\S{30,}/ /g;                              #Remove long strings (+30 characters)
+            $data=~ s/\W{4,}/ /g;                              #Remove string of 4 characters or more consisting of more than 4 non-alphanumeric characters
+            #$data=~ s/.*[-$%^*()_+|~=`{}\[\]:";'<>,\/]+.*//g;  #Remove string if it contains forbidden special characters
+            $data=~ s/\d+\.+\d+/ /g;                            #Remove false end of sentences (.)
+            $data=~ s/\d+\,+\d+/ /g;                            #Remove false end of sentences (.)
+            $data=~ s/\.\s+\./\./g;                             #Remove double end of sentences             
+            $data=~ s/\n/ /g;                                   #Replace breaks by spaces
+            $data=~ s/ {2,}/ /g;                                #Remove double spaces
+            $data=~ s/see.{0,4}item/see \!Item/igms;           #Add ! as prefix when "Item" is used as a reference
+            $data=~ s/under.{0,4}item/under \!Item/igms;       #Add ! as prefix when "Item" is used as a reference
+            $data=~ s/in.{0,4}item/in \!Item/igms;             #Add ! as prefix when "Item" is used as a reference
+            $data=~ s/of.{0,4}item/of \!Item/igms;             #Add ! as prefix when "Item" is used as a reference
+            $data=~ s/with.{0,4}item/with \!Item/igms;         #Add ! as prefix when "Item" is used as a reference
+            $replace_old="([^!]item(.|\n){0,200}item)";         #Look for "Item" that is mentioned in a list (e.g. Table of Contents)
+
+            while($data=~m/$replace_old/ismo)
+                {
+                $data=~m/$replace_old/ismo;
+                $replace_new=$1;
+                $replace_new=~s/item/\!Item/ismo;
+                $data=~s/$replace_old/$replace_new/ismo;
+                }          
+                                         
             if($data=~m/($startstring.*?$endstring)/ismo)
                 {
                 $text=$1;
-
+                $text=~s/ENDOFTENK//ismo;
                 }
             else
                 {
@@ -180,28 +191,33 @@ while ($f < scalar @allfiles)
             
             if ($text=~m/($item8start)/ismo)    
                 {
-                $text=~s/$item8start/ENDOFITEM7/gis;
+                $text=~s/$item8start/ENDOFMDA/gis;
                 }
             elsif ($text=~m/$item9start/ismo)    
                 {
-                $text=~s/$item9start/ENDOFITEM7/gis;
+                $text=~s/$item9start/ENDOFMDA/gis;
                 }
             elsif ($text=~m/$item10start/ismo)    
                 {
-                $text=~s/$item10start/ENDOFITEM7/gis;
+                $text=~s/$item10start/ENDOFMDA/gis;
                 }
             
             if($text=~m/($item7start.*?$item7end)/ismo)
                 {
                 $mda=$1;
+                $mda=~s/ENDOFMDA//ismo;
+                $mda=~s/\!Item/Item/gis;
                 }
             else
                 {
                 $mda="not found";
                 }
+            $text=~s/\!Item/Item/gis;
+            $text=~s/ENDOFMDA/ Item 0 /gis;
             }
     
         #Save output to file in destination folder (use the same filename as source file)
+        binmode(STDOUT, ":utf8");
         open $output_10k, ">", "$target_10k$slash$allfiles[$f-1]" or die $!;
         print $output_10k $text;
         close $output_10k;
@@ -222,6 +238,5 @@ while ($f < scalar @allfiles)
     
 #Print job duration
 print $p->report("$f files processed: %L (%l sec) \n", $c);
-
 }
 
