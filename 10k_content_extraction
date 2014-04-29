@@ -241,6 +241,5 @@ while ($f < scalar @allfiles)
     
 #Print job duration
 print $p->report("$f files processed: %L (%l sec) \n", $c);
-print $tenk;
 }
 
