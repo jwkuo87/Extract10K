@@ -28,8 +28,8 @@ my $replace_old;                #Partial text to be replaced
 my $replace_new;                #Partial text with the new replacement
 
 #Searchstrings in regular expressions
-my $startstring='item *1 *[^0-9A-Za-z]{0,2} *(business)?';
-my $endstring='ENDOFTENK';
+my $tenkstart='item *1[^0-9A-Za-z]{0,2} *(business)?';
+my $tenkend='ENDOFTENK';
 my $item7start='item *7 *[^0-9A-Za-z]{0,2} *(management)?';
 my $item7end='ENDOFMDA';
 my $item8start='item *8 *[^0-9A-Za-z]{0,2} *(financial)?';     
@@ -135,7 +135,7 @@ while ($f < scalar @allfiles)
         #Steps to extract text
             {
             #HTML Cleanup
-            $data=~ s/\nM[^a-z]{0,100}?\n//g;
+            $data=~ s/\nM[^a-z]+\n/\n/gs;                               #Remove line if it starts with capital M and everything thereafter does not contain a single lower case letter
             $data=~ s/<\/SEC-DOCUMENT>/ENDOFTENK/is;                    #Mark end of 10K
             $data=~ s/&nbsp;/ /ig;                                      #Replace &nbsp; with space (decode_entities works too, but results in invalid characters)
             $data=~ s/&#160;/ /ig;                                      #Replace &#160; with space (decode_entities works too, but results in invalid characters)
@@ -175,7 +175,7 @@ while ($f < scalar @allfiles)
                 $data=~s/$replace_old/$replace_new/ismo;
                 }          
                                          
-            if($data=~m/($startstring.*?)$endstring/ismo)
+            if($data=~m/($tenkstart.*?)$tenkend/ismo)
                 {
                 $tenk=$1;
                 }
@@ -183,30 +183,6 @@ while ($f < scalar @allfiles)
                 {
                 $tenk="not found";
                 }
-            
-            # if ($tenk=~m/($item8start)/ismo)    
-                # {
-                # $tenk=~s/$item8start/ENDOFMDA/gis;
-                # }
-            # elsif ($tenk=~m/$item9start/ismo)    
-                # {
-                # $tenk=~s/$item9start/ENDOFMDA/gis;
-                # }
-            # elsif ($tenk=~m/$item10start/ismo)    
-                # {
-                # $tenk=~s/$item10start/ENDOFMDA/gis;
-                # }
-            
-            # if($tenk=~m/($item7start.*?$item7end)/ismo)
-                # {
-                # $mda=$1;
-                # $mda=~s/ENDOFMDA//ismo;
-                # $mda=~s/Item\!/Item/gis;
-                # }
-            # else
-                # {
-                # $mda="not found";
-                # }
                 
             if($tenk=~m/($item7start.*?)($item8start|$item9start|$item10start)/ismo)
                 {
@@ -229,9 +205,9 @@ while ($f < scalar @allfiles)
         print $output_mda $mda;
         close $output_mda;
         
-        #open $log, ">>", "$source$slash"."log.txt" or die $!;
-        #print $log "$allfiles[$f-1]\n";
-        #close $log;
+        open $log, ">>", "$source$slash"."log.txt" or die $!;
+        print $log "$allfiles[$f-1]\n";
+        close $log;
         }
     
     #Update progress
