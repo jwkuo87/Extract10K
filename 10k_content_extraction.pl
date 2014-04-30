@@ -30,8 +30,8 @@ my $tenkstart='item\s1\.?\s[^0-9A-Za-z]{0,3}(business)?';
 my $tenkend='ENDOFTENK';
 my $item7start='item\s*7\s*[^0-9A-Za-z]{0,2}\s*(management)?';
 my $item8start='item\s*8\s*[^0-9A-Za-z]{0,2}\s*(financial)?';     
-my $item9start='item *9 *[^0-9A-Za-z]{0,2} *(change)?';
-my $item10start='item *(10|11|12|13|14|15|16) *';
+my $item9start='item\s*9\s*[^0-9A-Za-z]{0,2}\s*(change)?';
+my $item10start='item\s*(10|11|12|13|14|15|16)\s*';
 
 if($os ne "WIN" && $os ne "OSX")
 {
@@ -45,7 +45,7 @@ elsif($os eq "WIN")
 #E.g. if the filings are located in C:/EDGAR/10K/*.txt then set the $base folder as C:\\EDGAR
 $slash="\\";
 $base="C:\\EDGAR";
-$folder="10K1";
+$folder="10K";
 $target_10k="$base$slash"."10K_Full"."$slash$folder";
 $target_mda="$base$slash"."10K_MDA"."$slash$folder";
 }
@@ -169,9 +169,9 @@ else
     print $output_mda $mda;
     close $output_mda;
     
-    #open $log, ">>", "$base$slash"."log.txt" or die $!;
-    #print $log "$file\n";
-    #close $log;
+    open $log, ">>", "$base$slash"."log.txt" or die $!;
+    print $log "$file\n";
+    close $log;
     }
     
     $c++;
