@@ -5,7 +5,7 @@ Extracting text from the raw 10-K filings on SEC's EDGAR database. Output is two
 
 The script does not include HTML::Parse or HTML::Strip, since they gave errors. Hence the approach of using Regex to solve the problem. Since the script will be used to analyze readability (with the ReadabilityStatistics in PHP), the issue with formatting is less relevant. The script does provide some basic means to recognize sentences and new lines (changing </p> and such into end of sentences) and cleaning the result (removing duplicate periods/spaces/breaks). 
 
-Another part of this script is that it leaves tables in the output (albeit not in their original formatting, but split into seperate lines). The underlying assumption is that the numbers will not affect the readability results, since numerical characters are ignored. Also, removing all information stored between &lt;TABLE&gt; and &lt;/TABLE&gt; would result in removing relevant information where the &lt;TABLE&gt; tag was improperly used to list bulletpoints in the 10K. 
+Another part of this script is that it leaves tables in the output (albeit not in their original formatting, but split into seperate lines). The underlying assumption is that the numbers will not affect the readability results, since numerical characters are ignored. Also, removing all information stored between &lt;TABLE&gt; and &lt;/TABLE&gt; would result in removing relevant information where the &lt;TABLE&gt; tag was improperly used to list bulletpoints in the 10K, and sometimes even the 10K filing itself (including chapters and text). 
 
 
 
@@ -20,6 +20,3 @@ The output for all files in the source directory will be written to a text file 
 
 On the todo list:
 - Improve multithreading so files are processed correctly (instead of 4 threads doing the exact same thing)
-- Improve regular expressions for item extraction (MD&A)
-- Remove duplicate spaces and breaks in output file (10K)
-- Fix wide characters in print
