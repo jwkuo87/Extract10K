@@ -7,11 +7,14 @@ no warnings 'recursion';
 
 #All variables
 my $os="WIN";                   #Declare operating system for correct directory handling: WIN for Windows and OSX for Macintosh
-my $base;                       #Base folder for the 10K filings
-my $folder;                     #Folder where 10K filings are placed
+my $folder;                     #Base folder for the 10K filings
+my $subfolder="10K";            #Subfolder where 10K filings are placed (Optional)
+my $folder10kfull="10K_Full";   #Name of subfolder for output (10K)
+my $folder10kmda="10K_MDA";     #Name of subfolder for output (MD&A)
 my $target_10k;                 #Destination for output (10K)
 my $target_mda;                 #Destination for output (MD&A)
 my $slash;                      #Declare slash (dependent on operating system)
+my $file;                       #Filename
 my @allfiles;                   #All files in source directory, put into an array
 my $p;                          #Variable for progress-bar
 my $c;                          #Variable for progress-bar
@@ -42,33 +45,28 @@ exit;
 elsif($os eq "WIN")
 {
 #Set folders for Windows. Put raw 10K filings in a folder called "10K" and set the base folder below (replace / with \\)
-#E.g. if the filings are located in C:/EDGAR/10K/*.txt then set the $base folder as C:\\EDGAR
 $slash="\\";
-$base="C:\\EDGAR";
-$folder="10K";
-$target_10k="$base$slash"."10K_Full"."$slash$folder";
-$target_mda="$base$slash"."10K_MDA"."$slash$folder";
+$folder="C:\\EDGAR\\10K_Raw";
 }
 
 elsif($os eq "OSX")
 {
-#Set folders for Macintosh. Put raw 10K filings in a folder called "10K" and set the base folder below
-#E.g. if the filings are located in /Volumes/Untitled/EDGAR/10K/*.txt then set the $base folder as /Volumes/Untitled/EDGAR
+#Set folders for Macintosh. Put raw 10K filings under the $folder folder. If using subfolders (by year), then enter the years in $subfolder
 $slash="/";
-$base="/Volumes/Data/Documents";
-$folder="10K";
-$target_10k="$base$slash"."10K_Full"."$slash$folder";
-$target_mda="$base$slash"."10K_MDA"."$slash$folder";
+$folder="/Volumes/Data/Documents/10K_Raw";
 }
 
 #Open source folder and read all files
-opendir(DIR,"$base$slash$folder") or die $!;
-@allfiles=grep ! /(^\.|^(log\.txt))/, readdir DIR;
+opendir(DIR,"$folder$slash$subfolder") or die $!;
+@allfiles=grep /(.\.txt)/, readdir DIR;
 chomp(@allfiles);
 
 #Creates destination folder
-mkdir "$base$slash"."10K_Full";
-mkdir "$base$slash"."10K_MDA";
+$target_10k="$folder$slash$folder10kfull$slash$subfolder";
+$target_mda="$folder$slash$folder10kmda$slash$subfolder";
+
+mkdir "$folder$slash$folder10kfull";
+mkdir "$folder$slash$folder10kmda";
 mkdir $target_10k;
 mkdir $target_mda;
 
@@ -78,9 +76,9 @@ $p=new Time::Progress;
 $p->attr(min => 0, max => scalar @allfiles);
 $c=0;
 
-if (-e "$base$slash"."log.txt")
+if (-e "$folder$slash"."log.txt")
 {
-open (FH, "<", "$base$slash"."log.txt") or die $!;
+open (FH, "<", "$folder$slash"."log.txt") or die $!;
 @filesinlog = <FH>;
 chomp(@filesinlog);
 close FH or die $!;
@@ -94,7 +92,7 @@ else
     {
         {
         local $/;
-        open (SLURP, "<", "$base$slash$folder"."$slash$file") or die $!;
+        open (SLURP, "<", "$folder$slash$subfolder$slash$file") or die $!;
         $data = <SLURP>;
         }
     close SLURP or die $!;
@@ -169,7 +167,7 @@ else
     print $output_mda $mda;
     close $output_mda;
     
-    open $log, ">>", "$base$slash"."log.txt" or die $!;
+    open $log, ">>", "$folder$slash"."log.txt" or die $!;
     print $log "$file\n";
     close $log;
     }
