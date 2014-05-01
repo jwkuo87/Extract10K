@@ -1,10 +1,8 @@
 #!/usr/bin/perl -w
 use strict;
 use Time::Progress;
-use threads;
 
 #All variables
-my $num_of_threads = 1;         #Number of threads
 my $os="WIN";                   #Declare operating system for correct directory handling: WIN for Windows and OSX for Macintosh
 my $source;                     #Source of text files
 my $target;                     #Destination for output
@@ -37,7 +35,7 @@ $target="/Volumes/Data/Documents/10K_Info";
 $slash="/";
 }
 
-{
+
 #Directory with all 10K filings (as downloaded from EDGAR)
 opendir(DIR,"$source") or die $!;
 @allfiles=grep ! /^\./, readdir DIR;
@@ -53,35 +51,7 @@ $p=new Time::Progress;
 $p->attr(min => 0, max => scalar @allfiles);
 $c=0;
 
-#Create an array of threads
-@threads = job();
-
-#Loop through the array until every thread is finished
-foreach(@threads)
-    {
-    $_ = threads->create(\&extract);
-    }
-
-foreach(@threads)
-    {
-    $_->join();
-    }
-}
-
-#Subroutines
-sub job
 {
-my @initThreads;
-for(my $t = 1;$t<=$num_of_threads;$t++)
-    {
-    push(@initThreads,$t);
-    }
-return @initThreads;
-}
-
-sub extract
-{
-my $f=0;
 my $cik="not found";
 my $report_date="not found";
 my $file_date="not found";
@@ -90,14 +60,13 @@ my $sic="not found";
 my $HTML=0;
 my $data="";
 
-while ($f < scalar @allfiles)
+foreach my $file(allfiles)
     {
     print $p->report("%45b %p\r", $c);
         {
             {
             local $/;
-            open (SLURP, "$source$slash$allfiles[$f]") or die $!;
-            $f++;
+            open (SLURP, "<", "$source$slash$file") or die $!;
             $data = <SLURP>;
             }
         close SLURP or die $!;
@@ -110,12 +79,12 @@ while ($f < scalar @allfiles)
         if($data=~m/^\s*COMPANY\s*CONFORMED\s*NAME:\s*(.*$)/m){$name=$1;}
         if($data=~m/^\s*STANDARD\s*INDUSTRIAL\s*CLASSIFICATION:.*?\[(\d{4})/m){$sic=$1;}
 
-        print $output_info "$allfiles[$f-1];$HTML;$cik;$report_date;$file_date;$name;$sic\n";
+        print $output_info "$file;$HTML;$cik;$report_date;$file_date;$name;$sic\n";
         }
     $c++;
     print $p->report("%45b %p\r", $c);
     }
 
 close $output_info;
-print $p->report("$f files processed: %L (%l sec) \n", $c);
+print $p->report("$c files processed: %L (%l sec) \n", $c);
 }
