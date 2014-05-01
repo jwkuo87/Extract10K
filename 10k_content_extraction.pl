@@ -118,12 +118,11 @@ else
                                                                     #Remove string if it contains forbidden special characters
 
         #Optional Text Cleanup
-        $data=~ s/\.\s+\./\./g;                                     #Remove double end of sentences        
+        $data=~ s/\.\s*\./\./gms;                                   #Remove double end of sentences        
         $data=~ s/ {2,}/ /g;                                        #Remove double spaces        
         $data=~ s/\n /\n/g;                                         #Remove redundant empty lines
         $data=~ s/\n{3,}/\n\n/g;                                    #Remove redundant empty lines
-        $data=~ s/\s+\./\./gms;                                     #Remove blank space when it is followed by a period
-        
+  
         #Add ! as suffix when "Item" is used as a reference (either when preceded by a preposition or when within 1000 characters, there is another mention of "Item")
         $data=~ s/(see|under|in|of|with|this|,)( *.{0,4})(item)/$1$2$3\!/igm; 
         $data=~ s/(item)( *[0-9][0-9A-Za-z]{0,2} *of)/$1\!$2/igm;
