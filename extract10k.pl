@@ -108,7 +108,7 @@ else
         $data=~ s/<br.{0,2}>/\./ig;                                 #End of sentence for break
         $data=~ s/<\/tr>/\.\n/ig;                                   #Break line for end of table rows
         $data=~ s/<.*?>/ /igms;                                     #Remove html tags (starts with "<", ends with ">")
-        $data=~ s/&.{2,4};/ /ig;                                    #Replace all HTML entities with spaces
+        $data=~ s/&.{2,6};/ /ig;                                    #Replace all HTML entities with spaces
         $data=~ s/\S{30,}/ /g;                                      #Remove long strings (+30 characters)
         
         #Text Cleanup
