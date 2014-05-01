@@ -74,7 +74,7 @@ else
     }
 
 // Open directory and proceed to read its contents
-
+ob_end_flush();
 $counter = 0;
 
 if (is_dir($dir))
@@ -136,14 +136,32 @@ if (is_dir($dir))
                     file_put_contents($outputdir. "output.txt" , $output, FILE_APPEND | LOCK_EX);
                     file_put_contents($outputdir. "log.txt" , $logoutput, FILE_APPEND | LOCK_EX);
                     
-                    set_time_limit(1200);
+                    set_time_limit(1200);                
+                    $counter++;   
                     }
                 
-                $counter++;    
                 }
             }
         closedir($dh);
-        echo "Done! $counter files processed of $filecount";
+        
+        $progress = intval($counter/$filecount * 100)."%";
+        
+        // Javascript for updating the progress bar and information
+                echo '<script language="javascript">
+                document.getElementById("progress").innerHTML="<div style=\"width:'.$progress.';background-color:#FA0;\">&nbsp;</div>";
+                document.getElementById("information").innerHTML="'.$counter.'/'.$filecount.' file(s) processed.";
+                </script>';
+    
+
+                // This is for the buffer achieve the minimum size in order to flush data
+                echo str_repeat(' ',1024*64);
+    
+
+                // Send output to browser immediately
+                flush();
+
+            
+        echo "Done!";
     }
     }
     
