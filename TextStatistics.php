@@ -1,3 +1,16 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+<head>
+    <title>Progress Bar</title>
+</head>
+<body>
+<!-- Progress bar holder -->
+<div id="progress" style="width:500px;border:2px solid #888;"></div>
+<!-- Progress information -->
+<div id="information" style="width"></div>
+
+
 <?php
 
 /*  Readability
@@ -27,11 +40,12 @@
 
 */
 
-set_time_limit(300);
+
+set_time_limit(1200);
 
 //Set directory of files to be analyzed in $dir. Analysis output will be placed in subfolder "Batch" 
 $dir = "C:\\10K\\";
-$outputdir = $dir . 'Batch\\';
+$outputdir = $dir . 'Readability\\';
 if (!is_dir($outputdir)) 
     {
     mkdir($outputdir);
@@ -44,15 +58,13 @@ if (file_exists($outputdir. "output.txt"))
     }
 else
     {
-    file_put_contents($outputdir. "output.txt" , "Filename;Gunning Fog Score;Flesch-Kincaid;Sentences;Words;Unique Words;Syllables;Characters" . "\r\n");
+    file_put_contents($outputdir. "output.txt" , "Filename;Gunning Fog Score;Flesch-Kincaid;Sentences;Words;Unique Words;Syllables;Letter Count" . "\r\n");
     }
 
 // Check to see if log file is present (used to continue the job)
 if (file_exists($outputdir. "log.txt"))
     {
     $log = file($outputdir. "log.txt");
-    array_shift($log);
-    array_pop($log);
     file_put_contents($outputdir. "log.txt" , "-\r\n", FILE_APPEND | LOCK_EX);
     }
 else
@@ -62,12 +74,36 @@ else
     }
 
 // Open directory and proceed to read its contents
+
+$counter = 0;
+
 if (is_dir($dir))
     {
-    if ($dh = opendir($dir))
+    $files = glob($dir.'*.txt');
+    if ($files !== false)
         {
+        $filecount = count($files);
+        }
+    if($dh=opendir($dir))
+    {
         while (($file = readdir($dh)) !== false)
             {
+                $progress = intval($counter/$filecount * 100)."%";
+                
+                // Javascript for updating the progress bar and information
+                echo '<script language="javascript">
+                document.getElementById("progress").innerHTML="<div style=\"width:'.$progress.';background-color:#FA0;\">&nbsp;</div>";
+                document.getElementById("information").innerHTML="'.$counter.'/'.$filecount.' file(s) processed.";
+                </script>';
+    
+
+                // This is for the buffer achieve the minimum size in order to flush data
+                echo str_repeat(' ',1024*64);
+    
+
+                // Send output to browser immediately
+                flush();
+            
             if (filetype($dir . $file) == 'file')
                 {
                 if (!in_array($file."\r\n", $log))
@@ -95,15 +131,20 @@ if (is_dir($dir))
                     $logoutput = 
                     $file
                     . "\r\n";
-                    
+                  
                     // Write the outputs to the files
                     file_put_contents($outputdir. "output.txt" , $output, FILE_APPEND | LOCK_EX);
                     file_put_contents($outputdir. "log.txt" , $logoutput, FILE_APPEND | LOCK_EX);
+                    
+                    set_time_limit(1200);
                     }
+                
+                $counter++;    
                 }
             }
         closedir($dh);
-        }
+        echo "Done! $counter files processed of $filecount";
+    }
     }
     
    
@@ -347,7 +388,7 @@ class TextStatistics
             return $clean[$key];
         }
 
-        $strText = utf8_decode($strText);
+        # $strText = utf8_decode($strText);
 
         // Curly quotes etc
         $strText = str_replace(array("\xe2\x80\x98", "\xe2\x80\x99", "\xe2\x80\x9c", "\xe2\x80\x9d", "\xe2\x80\x93", "\xe2\x80\x94", "\xe2\x80\xa6"), array("'", "'", '"', '"', '-', '--', '...'), $strText);
@@ -1278,3 +1319,7 @@ class TextStatistics
         return $string;
     }
 }
+
+?>
+</body>
+</html>
