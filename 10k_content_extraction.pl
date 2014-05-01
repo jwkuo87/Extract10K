@@ -118,7 +118,7 @@ else
                                                                     #Remove string if it contains forbidden special characters
 
         #Optional Text Cleanup
-        $data=~ s/\.\s*\./\./gms;                                   #Remove double end of sentences        
+        $data=~ s/\.*\s*\./\./gms;                                   #Remove double end of sentences        
         $data=~ s/ {2,}/ /g;                                        #Remove double spaces        
         $data=~ s/\n /\n/g;                                         #Remove redundant empty lines
         $data=~ s/\n{3,}/\n\n/g;                                    #Remove redundant empty lines
