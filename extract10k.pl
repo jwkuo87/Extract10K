@@ -7,22 +7,23 @@ no warnings 'recursion';
 
 #All variables
 my $os="WIN";                   #Declare operating system for correct directory handling: WIN for Windows and OSX for Macintosh
-my $folder;                     #Base folder for the 10K filings
-my $subfolder="10K";            #Subfolder where 10K filings are placed (Optional)
-my $folder10kfull="10K_Full";   #Name of subfolder for output (10K)
-my $folder10kmda="10K_MDA";     #Name of subfolder for output (MD&A)
-my $target_10k;                 #Destination for output (10K)
-my $target_mda;                 #Destination for output (MD&A)
+my $folder;                     #Base directory for the 10K filings
+my $subfolder="2012";           #Subdirectory where 10K filings are placed (Default is ./10K/10K_Raw/2012/*.txt)
+my $folder10kfull="10K_Full";   #Name of subdirectory for output (10K)
+my $folder10kmda="10K_MDA";     #Name of subdirectory for output (MD&A)
+my $target_10k;                 #Name of target directory for output (10K)
+my $target_mda;                 #Name of target directory for output (MD&A)
 my $slash;                      #Declare slash (dependent on operating system)
 my $file;                       #Filename
-my @allfiles;                   #All files in source directory, put into an array
+my @allfiles;                   #All files in directory, put into an array
+my $allfiles;                   #Total files in directory
 my $p;                          #Variable for progress-bar
 my $c;                          #Variable for progress-bar
-my $data;                       #Contents from source file
+my $data;                       #Input file contents
 my $tenk;                       #Results of the search query (10K)
 my $mda;                        #Results of the search query (MD&A)
-my $output_10k;                 #Output file for full 10K
-my $output_mda;                 #Output file for MD&A
+my $output_10k;                 #Output file with full 10K
+my $output_mda;                 #Output file with MD&A
 my $log;                        #Log file (also used to determine point to continue progress)
 my @filesinlog;                 #Files that have been processed according to log file
 my $replace_old;                #Partial text to be replaced
@@ -46,14 +47,14 @@ elsif($os eq "WIN")
 {
 #Set folders for Windows. Put raw 10K filings in folder\subfolder
 $slash="\\";
-$folder="C:\\EDGAR\\10K_Raw";
+$folder="C:\\10K\\10K_Raw";
 }
 
 elsif($os eq "OSX")
 {
 #Set folders for Macintosh. Put raw 10K filings in folder\subfolder
 $slash="/";
-$folder="/Volumes/Data/Documents/10K_Raw";
+$folder="/Volumes/Data/Documents/10K/10K_Raw";
 }
 
 #Open source folder and read all files
@@ -75,11 +76,12 @@ $|=1;
 $p=new Time::Progress;
 $p->attr(min => 0, max => scalar @allfiles);
 $c=0;
+$allfiles=scalar @allfiles;
 
 #Check if log file is present
-if (-e "$folder$slash"."log.txt")
+if (-e "$folder$slash$subfolder".".log")
 {
-open (FH, "<", "$folder$slash"."log.txt") or die $!;
+open (FH, "<", "$folder$slash$subfolder".".log") or die $!;
 @filesinlog = <FH>;
 chomp(@filesinlog);
 close FH or die $!;
@@ -119,7 +121,7 @@ else
                                                                     #Remove string if it contains forbidden special characters
 
         #Optional Text Cleanup
-        $data=~ s/\.*\s*\./\./gms;                                   #Remove double end of sentences        
+        $data=~ s/\.*\s*\./\./gms;                                  #Remove double end of sentences        
         $data=~ s/ {2,}/ /g;                                        #Remove double spaces        
         $data=~ s/\n /\n/g;                                         #Remove redundant empty lines
         $data=~ s/\n{3,}/\n\n/g;                                    #Remove redundant empty lines
@@ -167,15 +169,15 @@ else
     print $output_mda $mda;
     close $output_mda;
     
-    open $log, ">>", "$folder$slash"."log.txt" or die $!;
+    open $log, ">>", "$folder$slash$subfolder".".log" or die $!;
     print $log "$file\n";
     close $log;
     }
     
-    $c++;
     #Update progress
-    print $p->report("%45b %p\r", $c);
+    $c++;
+    print $p->report("$c/$allfiles files processed: %L %20b %p\r", $c);
 }
 
 #Print job duration
-print $p->report("$c files processed: %L (%l sec) \n", $c);
+print $p->report("$c/$allfiles files processed: %L \n", $c);
