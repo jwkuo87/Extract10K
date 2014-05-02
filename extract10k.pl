@@ -25,6 +25,7 @@ my $mda;                        #Results of the search query (MD&A)
 my $output_10k;                 #Output file with full 10K
 my $output_mda;                 #Output file with MD&A
 my $log;                        #Log file (also used to determine point to continue progress)
+my $logfile="$subfolder".".log";#Filename of log file
 my @filesinlog;                 #Files that have been processed according to log file
 my $replace_old;                #Partial text to be replaced
 my $replace_new;                #Partial text with the new replacement
@@ -79,9 +80,9 @@ $c=0;
 $allfiles=scalar @allfiles;
 
 #Check if log file is present
-if (-e "$folder$slash$subfolder".".log")
+if (-e "$folder$slash$logfile")
 {
-open (FH, "<", "$folder$slash$subfolder".".log") or die $!;
+open (FH, "<", "$folder$slash$logfile") or die $!;
 @filesinlog = <FH>;
 chomp(@filesinlog);
 close FH or die $!;
@@ -169,7 +170,7 @@ else
     print $output_mda $mda;
     close $output_mda;
     
-    open $log, ">>", "$folder$slash$subfolder".".log" or die $!;
+    open $log, ">>", "$folder$slash$logfile" or die $!;
     print $log "$file\n";
     close $log;
     }
