@@ -35,7 +35,7 @@ elsif($os eq "WIN")
 {
 #Set folders for Windows. Put raw 10K filings in folder\subfolder
 $slash="\\";
-$folder="C:\\10K\\10K_Full\\";
+$folder="C:\\10K\\10K_Full";
 }
 
 elsif($os eq "OSX")
