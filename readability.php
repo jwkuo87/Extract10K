@@ -1,3 +1,4 @@
+
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <html lang="en">
 <head>
@@ -138,7 +139,10 @@ if (is_dir($dir))
                     set_time_limit(1200);                
                     $counter++;   
                     }
-                
+                else
+                    {
+                    $counter++;
+                    }
                 }
             }
         closedir($dh);
