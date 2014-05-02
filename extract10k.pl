@@ -44,14 +44,14 @@ exit;
 
 elsif($os eq "WIN")
 {
-#Set folders for Windows. Put raw 10K filings in a folder called "10K" and set the base folder below (replace / with \\)
+#Set folders for Windows. Put raw 10K filings in folder\subfolder
 $slash="\\";
 $folder="C:\\EDGAR\\10K_Raw";
 }
 
 elsif($os eq "OSX")
 {
-#Set folders for Macintosh. Put raw 10K filings under the $folder folder. If using subfolders (by year), then enter the years in $subfolder
+#Set folders for Macintosh. Put raw 10K filings in folder\subfolder
 $slash="/";
 $folder="/Volumes/Data/Documents/10K_Raw";
 }
@@ -76,6 +76,7 @@ $p=new Time::Progress;
 $p->attr(min => 0, max => scalar @allfiles);
 $c=0;
 
+#Check if log file is present
 if (-e "$folder$slash"."log.txt")
 {
 open (FH, "<", "$folder$slash"."log.txt") or die $!;
