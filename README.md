@@ -1,7 +1,7 @@
 10K Content Analysis
 ======================
 
-Extracting text from the raw 10-K filings on SEC's EDGAR database. Output is two-fold: One for the entire 10-K and one for Item 7(A), both in txt files. Retrieving the files can be done with SAS and Perl. Search for the tutorial from WRDS.
+Extracting text from the raw 10-K filings on SEC's EDGAR database. Output is two-fold: One for the entire 10-K and one for Item 7(A), both in txt files. Retrieving the files can be done with SAS and Perl (Tutorial on WRDS) or by using Perl with scripts by Andy Leone.
 
 All scripts are not written from scratch, but are an extension of existing scripts. Most notably, the additions include retrieving folder contents, keeping a log (so you can cancel and continue with the batch process a later time) and showing a progress bar. The log file also means that despite running the script multiple times, the output will contain unique data and should not contain invalid data, even when the computer freezes. In the worst case, if the computer would freeze during the process of writing to the output, the output would contain empty values which could be easily detected if you import the outputted text file into an excel spreadsheet and filter the data. Also, since output is written first, and the log file right after it succeeds, if the computer would freeze in between these two processes, the log file would say that the file has not been processed yet, while it is in fact already in the output file. The result: your output file would contain duplicate values for that specific file when the computer halted. The script can be both used on Windows and on Mac, but your OS has to be configured in the individual script.
 
