@@ -60,7 +60,7 @@ my $sic="not found";
 my $HTML=0;
 my $data="";
 
-foreach my $file(allfiles)
+foreach my $file(@allfiles)
     {
     print $p->report("%45b %p\r", $c);
         {
